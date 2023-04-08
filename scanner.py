@@ -46,6 +46,21 @@ def input_book_info(barcode):
 
     return book_info
 
+def retrieve_record(collection, book_id):
+    """ retrieve book item
+    
+    Args: 
+        collection
+        book_id
+    Returns:
+        book information
+    """
+    
+    book_info = collection.find_one({"_id": book_id})
+    print(book_info)
+
+    return book_info
+
 
 def config_camera(width, height):
     """ camera configuration """
@@ -62,6 +77,15 @@ def main():
     # connect to database
     dbname = get_database()
     collection_name = dbname["books"]
+
+    while True:
+        print("Input 1 for retrieving items, 2 for inserting items.")
+        mode = input("Selected mode: ")
+        if mode not in ['1','2']:
+            print("Invalid Mode!")
+        else:
+            break
+        
     
     # configurate camera
     cap = config_camera(640, 480)
@@ -77,13 +101,18 @@ def main():
             print(barcode)
             time.sleep(1)
 
+            # retrieve record from database
+            if mode == '1':
+                book = retrieve_record(collection_name, barcode)
+
             # insert record to database
-            book = input_book_info(barcode)
-            try:
-                collection_name.insert_one(book)
-            except pymongo.errors.DuplicateKeyError:
-                print("ID exists!")
-                continue
+            if mode == '2':
+                book = input_book_info(barcode)
+                try:
+                    collection_name.insert_one(book)
+                except pymongo.errors.DuplicateKeyError:
+                    print("ID exists!")
+                    continue
 
         cv2.imshow('Code-scanner',frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
